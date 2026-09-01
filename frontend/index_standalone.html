@@ -1,0 +1,1221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ReturnShield AI - Risk Assessment Dashboard (Standalone)</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛡️</text></svg>">
+  
+  <!-- Google Fonts Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    /* Premium Black & Warm Gold Theme matching App.css */
+    :root {
+      --bg-primary: #0B0B0B;
+      --bg-secondary: #141414;
+      --bg-panel: #141414;
+      --bg-input: #181818;
+      --border-color: #282828;
+      --text-main: #F5F2EA;
+      --text-muted: #A0A0A0;
+      --accent-color: #E7B93E;
+      --btn-hover: #F5CB5C;
+      --color-low: #34D399;
+      --color-med: #E7B93E;
+      --color-high: #EF4444;
+      --color-veryhigh: #F87171;
+    }
+
+    body {
+      background-color: var(--bg-primary);
+      color: var(--text-main);
+      margin: 0;
+      padding: 0;
+      font-family: 'Merriweather', Georgia, serif;
+      min-height: 100vh;
+      box-sizing: border-box;
+    }
+
+    .dashboard-container {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* Header */
+    .dashboard-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 24px;
+      background-color: var(--bg-panel);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+    }
+
+    .logo-container {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .logo-icon {
+      font-size: 32px;
+    }
+
+    .logo-container h1 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 24px;
+      font-weight: 700;
+      margin: 0;
+      letter-spacing: -0.5px;
+    }
+
+    .subtitle {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin: 2px 0 0 0;
+    }
+
+    .health-badge-container {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .health-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      padding: 6px 12px;
+      border-radius: 20px;
+      border: 1px solid var(--border-color);
+    }
+
+    .health-badge.online {
+      background-color: rgba(16, 185, 129, 0.08);
+      color: var(--color-low);
+      border-color: rgba(16, 185, 129, 0.3);
+    }
+
+    .health-badge.offline {
+      background-color: rgba(239, 68, 68, 0.08);
+      color: var(--color-veryhigh);
+      border-color: rgba(239, 68, 68, 0.3);
+    }
+
+    .ping-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: currentColor;
+    }
+
+    .health-badge.online .ping-dot {
+      box-shadow: 0 0 8px var(--color-low);
+    }
+
+    .btn-refresh-health {
+      background: none;
+      border: 1px solid var(--border-color);
+      cursor: pointer;
+      padding: 6px 10px;
+      border-radius: 8px;
+      color: var(--text-main);
+      transition: all 0.2s;
+    }
+
+    .btn-refresh-health:hover {
+      background-color: var(--bg-input);
+      border-color: var(--text-muted);
+    }
+
+    /* Policy notice */
+    .policy-notice {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 14px 20px;
+      background-color: rgba(59, 130, 246, 0.06);
+      border: 1px dashed rgba(59, 130, 246, 0.4);
+      border-radius: 8px;
+    }
+
+    .notice-icon {
+      font-size: 18px;
+      color: var(--accent-color);
+    }
+
+    .policy-notice p {
+      font-size: 13px;
+      line-height: 1.4;
+      margin: 0;
+      color: #c9d1d9;
+    }
+
+    /* Layout Grid */
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 20px;
+      align-items: start;
+    }
+
+    /* Panels */
+    .panel {
+      background-color: var(--bg-panel);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 24px;
+      box-sizing: border-box;
+    }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 16px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .panel-header h2 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 20px;
+      font-weight: 600;
+      margin: 0;
+    }
+
+    .preset-selector {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .preset-label {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .btn-preset {
+      background-color: var(--bg-input);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-preset:hover {
+      border-color: var(--text-muted);
+    }
+
+    .btn-low:active, .btn-low:hover {
+      border-color: var(--color-low);
+      background-color: rgba(16, 185, 129, 0.05);
+    }
+
+    .btn-med:active, .btn-med:hover {
+      border-color: var(--color-med);
+      background-color: rgba(234, 179, 8, 0.05);
+    }
+
+    .btn-high:active, .btn-high:hover {
+      border-color: var(--color-veryhigh);
+      background-color: rgba(239, 68, 68, 0.05);
+    }
+
+    /* Form */
+    .risk-form {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .form-section-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--accent-color);
+      margin-top: 8px;
+      border-left: 3px solid var(--accent-color);
+      padding-left: 8px;
+    }
+
+    .form-group-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 12px;
+    }
+
+    .form-control {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .form-control label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .form-control input, .form-control select {
+      background-color: var(--bg-input);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 8px 12px;
+      font-family: inherit;
+      font-size: 13px;
+      color: var(--text-main);
+      outline: none;
+      transition: border-color 0.2s;
+      box-sizing: border-box;
+    }
+
+    .form-control input:focus, .form-control select:focus {
+      border-color: var(--accent-color);
+      background-color: #21293c;
+    }
+
+    .btn-submit {
+      background-color: var(--accent-color);
+      color: #ffffff;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-top: 12px;
+    }
+
+    .btn-submit:hover {
+      background-color: var(--btn-hover);
+    }
+
+    .btn-submit:disabled {
+      background-color: var(--border-color);
+      color: var(--text-muted);
+      cursor: not-allowed;
+    }
+
+    /* Results layout */
+    .empty-state, .loading-state, .error-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 60px 20px;
+      min-height: 450px;
+      box-sizing: border-box;
+    }
+
+    .empty-icon, .error-icon, .spinner {
+      font-size: 54px;
+      margin-bottom: 20px;
+    }
+
+    .empty-state h3, .error-state h3 {
+      font-size: 18px;
+      margin: 0 0 10px 0;
+    }
+
+    .empty-state p, .loading-state p, .error-state p {
+      font-size: 13px;
+      color: var(--text-muted);
+      max-width: 320px;
+      margin: 0;
+      line-height: 1.5;
+    }
+
+    .spinner {
+      width: 48px;
+      height: 48px;
+      border: 4px solid var(--border-color);
+      border-top-color: var(--accent-color);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .btn-retry-health {
+      margin-top: 20px;
+      background-color: var(--bg-input);
+      border: 1px solid var(--border-color);
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      color: var(--text-main);
+      font-size: 13px;
+      transition: all 0.2s;
+    }
+
+    .btn-retry-health:hover {
+      border-color: var(--text-muted);
+    }
+
+    /* Active outcome layout */
+    .results-content {
+      display: none; /* hidden until prediction succeeds */
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .outcome-card {
+      display: flex;
+      align-items: center;
+      gap: 30px;
+      background-color: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 24px;
+      box-sizing: border-box;
+    }
+
+    .gauge-container {
+      position: relative;
+      width: 100px;
+      height: 100px;
+      flex-shrink: 0;
+    }
+
+    .gauge {
+      transform: rotate(-90deg);
+      width: 100%;
+      height: 100%;
+    }
+
+    .gauge-bg {
+      fill: none;
+      stroke: var(--bg-input);
+      stroke-width: 6;
+    }
+
+    .gauge-value {
+      fill: none;
+      stroke-width: 8;
+      stroke-linecap: round;
+      transition: stroke-dashoffset 0.6s ease;
+    }
+
+    .gauge-text {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .gauge-number {
+      font-family: 'Outfit', sans-serif;
+      font-size: 26px;
+      font-weight: 800;
+      line-height: 1;
+    }
+
+    .gauge-label {
+      font-size: 9px;
+      font-weight: 600;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .outcome-details {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      flex-grow: 1;
+    }
+
+    .metric-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .metric-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .decision-badge {
+      display: inline-block;
+      align-self: flex-start;
+      padding: 6px 16px;
+      border-radius: 6px;
+      font-family: 'Outfit', sans-serif;
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      line-height: 1.2;
+    }
+
+    .metric-row {
+      display: flex;
+      gap: 16px;
+    }
+
+    .metric-box {
+      background-color: var(--bg-panel);
+      border: 1px solid var(--border-color);
+      padding: 10px 16px;
+      border-radius: 6px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .box-label {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .box-value {
+      font-family: 'Outfit', sans-serif;
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    /* Explanation callout */
+    .summary-card {
+      background-color: rgba(59, 130, 246, 0.04);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 16px 20px;
+    }
+
+    .summary-card h3 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--accent-color);
+      margin: 0 0 8px 0;
+      letter-spacing: 0.5px;
+    }
+
+    .summary-text {
+      font-size: 13.5px;
+      line-height: 1.5;
+      margin: 0;
+      font-style: italic;
+      color: #e2e8f0;
+    }
+
+    /* SHAP Attributions */
+    .shap-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+
+    .shap-card {
+      background-color: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+
+    .shap-card h4 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      margin: 0 0 16px 0;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .pos-card h4 { color: #f87171; }
+    .neg-card h4 { color: #34d399; }
+
+    .no-factors {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin: 0;
+      font-style: italic;
+    }
+
+    .factors-list {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .factor-row {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .factor-info {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .factor-name {
+      color: var(--text-main);
+    }
+
+    .factor-val {
+      color: var(--text-muted);
+      font-size: 11px;
+      margin-left: 4px;
+    }
+
+    .factor-bar-container {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .factor-bar {
+      height: 8px;
+      border-radius: 4px;
+      transition: width 0.6s ease;
+    }
+
+    .pos-bar {
+      background-color: #ef4444;
+    }
+
+    .neg-bar {
+      background-color: #10b981;
+    }
+
+    .factor-contrib {
+      font-family: monospace;
+      font-size: 12px;
+      font-weight: 600;
+      width: 45px;
+      text-align: right;
+      flex-shrink: 0;
+    }
+
+    .pos-card .factor-contrib { color: #ef4444; }
+    .neg-card .factor-contrib { color: #10b981; }
+
+    @media (max-width: 1024px) {
+      .dashboard-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .dashboard-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+      }
+      
+      .outcome-card {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+      }
+      
+      .decision-badge {
+        align-self: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="dashboard-container">
+    <!-- Header -->
+    <header class="dashboard-header">
+      <div class="logo-container">
+        <span class="logo-icon">🛡️</span>
+        <div>
+          <h1>ReturnShield AI</h1>
+          <p class="subtitle">AI-Powered Return Risk Assessment (Standalone)</p>
+        </div>
+      </div>
+      
+      <div class="health-badge-container">
+        <span id="health-status" class="health-badge offline">
+          <span class="ping-dot"></span>
+          API: Checking...
+        </span>
+        <button onclick="checkHealth()" class="btn-refresh-health" title="Refresh API status">🔄</button>
+      </div>
+    </header>
+
+    <!-- Notice -->
+    <div class="policy-notice">
+      <span class="notice-icon">ℹ️</span>
+      <p>
+        <strong>Defense-Only System Notice:</strong> ReturnShield AI provides risk signals for human operator review. It does not automatically reject returns, block customer transactions, or execute automated customer punishments.
+      </p>
+    </div>
+
+    <main class="dashboard-grid">
+      <!-- Form Panel -->
+      <section class="panel">
+        <div class="panel-header">
+          <h2>Evaluate Transaction</h2>
+          <div class="preset-selector">
+            <span class="preset-label">Load Demo Case:</span>
+            <button class="btn-preset btn-low" onclick="loadPreset('low')">Low Risk</button>
+            <button class="btn-preset btn-med" onclick="loadPreset('medium')">Medium</button>
+            <button class="btn-preset btn-high" onclick="loadPreset('high')">High Risk</button>
+          </div>
+        </div>
+
+        <form id="risk-form" class="risk-form" onsubmit="handleSubmit(event)">
+          <div class="form-section-title">Identifiers</div>
+          <div class="form-group-row">
+            <div class="form-control">
+              <label>Order ID</label>
+              <input type="text" name="order_id" id="order_id" required>
+            </div>
+            <div class="form-control">
+              <label>Customer ID</label>
+              <input type="text" name="customer_id" id="customer_id" required>
+            </div>
+            <div class="form-control">
+              <label>Timestamp</label>
+              <input type="text" name="timestamp" id="timestamp" required>
+            </div>
+          </div>
+
+          <div class="form-section-title">Transaction Basics</div>
+          <div class="form-group-row">
+            <div class="form-control">
+              <label>Order Amount (INR)</label>
+              <input type="number" name="order_amount" id="order_amount" min="0" step="0.01" required>
+            </div>
+            <div class="form-control">
+              <label>Discount (%)</label>
+              <input type="number" name="discount_percentage" id="discount_percentage" min="0" max="100" step="0.1" required>
+            </div>
+            <div class="form-control">
+              <label>Product Category</label>
+              <select name="product_category" id="product_category">
+                <option value="Electronics">Electronics</option>
+                <option value="Clothing">Clothing</option>
+                <option value="Beauty">Beauty</option>
+                <option value="Home">Home</option>
+                <option value="Books">Books</option>
+              </select>
+            </div>
+            <div class="form-control">
+              <label>Payment Method</label>
+              <select name="payment_method" id="payment_method">
+                <option value="Credit Card">Credit Card</option>
+                <option value="Debit Card">Debit Card</option>
+                <option value="UPI">UPI</option>
+                <option value="Netbanking">Netbanking</option>
+                <option value="COD">COD</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-section-title">Customer History</div>
+          <div class="form-group-row">
+            <div class="form-control">
+              <label>Account Age (Days)</label>
+              <input type="number" name="customer_age_days" id="customer_age_days" min="0" required>
+            </div>
+            <div class="form-control">
+              <label>Previous Orders</label>
+              <input type="number" name="previous_orders" id="previous_orders" min="0" required>
+            </div>
+            <div class="form-control">
+              <label>Previous Returns</label>
+              <input type="number" name="previous_returns" id="previous_returns" min="0" required>
+            </div>
+            <div class="form-control">
+              <label>Return Rate (0-1)</label>
+              <input type="number" name="customer_return_rate" id="customer_return_rate" min="0" max="1" step="0.01" required>
+            </div>
+            <div class="form-control">
+              <label>Average Order Value</label>
+              <input type="number" name="average_order_value" id="average_order_value" min="0" step="0.01" required>
+            </div>
+          </div>
+
+          <div class="form-section-title">Velocity Metrics</div>
+          <div class="form-group-row">
+            <div class="form-control">
+              <label>Orders (7 Days)</label>
+              <input type="number" name="orders_last_7_days" id="orders_last_7_days" min="0" required>
+            </div>
+            <div class="form-control">
+              <label>Orders (30 Days)</label>
+              <input type="number" name="orders_last_30_days" id="orders_last_30_days" min="0" required>
+            </div>
+            <div class="form-control">
+              <label>Returns (7 Days)</label>
+              <input type="number" name="returns_last_7_days" id="returns_last_7_days" min="0" required>
+            </div>
+            <div class="form-control">
+              <label>Returns (30 Days)</label>
+              <input type="number" name="returns_last_30_days" id="returns_last_30_days" min="0" required>
+            </div>
+          </div>
+
+          <div class="form-section-title">Risk Flags & Timing</div>
+          <div class="form-group-row">
+            <div class="form-control">
+              <label>Delivery Days</label>
+              <input type="number" name="delivery_days" id="delivery_days" min="0" required>
+            </div>
+            <div class="form-control">
+              <label>Return Delay (Days)</label>
+              <input type="number" name="return_days_after_delivery" id="return_days_after_delivery" min="0" required>
+            </div>
+            <div class="form-control">
+              <label>Address Changes</label>
+              <input type="number" name="address_change_count" id="address_change_count" min="0" required>
+            </div>
+            <div class="form-control">
+              <label>Payment Failures</label>
+              <input type="number" name="payment_failures" id="payment_failures" min="0" required>
+            </div>
+            <div class="form-control">
+              <label>Chargebacks</label>
+              <input type="number" name="previous_chargebacks" id="previous_chargebacks" min="0" required>
+            </div>
+          </div>
+
+          <div class="form-group-row">
+            <div class="form-control">
+              <label>Is First Order?</label>
+              <select name="is_first_order" id="is_first_order">
+                <option value="1">Yes</option>
+                <option value="0">No</option>
+              </select>
+            </div>
+            <div class="form-control">
+              <label>Is High Value Order?</label>
+              <select name="is_high_value_order" id="is_high_value_order">
+                <option value="1">Yes</option>
+                <option value="0">No</option>
+              </select>
+            </div>
+            <div class="form-control">
+              <label>Review Threshold</label>
+              <input type="number" name="review_threshold" id="review_threshold" min="0" max="1" step="0.01" required>
+            </div>
+          </div>
+
+          <button type="submit" id="btn-submit" class="btn-submit">Analyze Return</button>
+        </form>
+      </section>
+
+      <!-- Results Panel -->
+      <section class="panel" style="min-height: 450px; position: relative;">
+        <!-- Loading State -->
+        <div id="loading-state" class="loading-state" style="display: none;">
+          <div class="spinner"></div>
+          <p>Evaluating return risk parameters...</p>
+        </div>
+
+        <!-- Error State -->
+        <div id="error-state" class="error-state" style="display: none;">
+          <span class="error-icon">⚠️</span>
+          <h3>Evaluation Error</h3>
+          <p id="error-message">Could not connect to the ReturnShield AI server.</p>
+          <button onclick="checkHealth()" class="btn-retry-health">Re-check API Connection</button>
+        </div>
+
+        <!-- Empty State -->
+        <div id="empty-state" class="empty-state">
+          <span class="empty-icon">📊</span>
+          <h3>Awaiting Input</h3>
+          <p>Select a demo preset or edit the details, then click <strong>Analyze Return</strong> to evaluate risk metrics and feature attributions.</p>
+        </div>
+
+        <!-- Results Content -->
+        <div id="results-content" class="results-content">
+          <!-- Outcome Header Card -->
+          <div class="outcome-card">
+            <div class="gauge-container">
+              <svg viewBox="0 0 100 100" class="gauge">
+                <circle cx="50" cy="50" r="42" class="gauge-bg" />
+                <circle cx="50" cy="50" r="42" class="gauge-value" id="gauge-arc" style="stroke-dasharray: 264; stroke-dashoffset: 264;" />
+              </svg>
+              <div class="gauge-text">
+                <span class="gauge-number" id="gauge-number">0</span>
+                <span class="gauge-label">Score</span>
+              </div>
+            </div>
+
+            <div class="outcome-details">
+              <div class="metric-group">
+                <span class="metric-label">Decision Recommendation</span>
+                <span class="decision-badge" id="decision-badge">ALLOW</span>
+              </div>
+
+              <div class="metric-row">
+                <div class="metric-box">
+                  <span class="box-label">Risk Band</span>
+                  <span class="box-value" id="risk-band-value">Low</span>
+                </div>
+                <div class="metric-box">
+                  <span class="box-label">Abuse Probability</span>
+                  <span class="box-value" id="probability-value">0.00%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Natural Explanation Summary -->
+          <div class="summary-card">
+            <h3>Natural Language Summary</h3>
+            <p class="summary-text" id="summary-text">Awaiting score summary...</p>
+          </div>
+
+          <!-- SHAP Attributions Section -->
+          <div class="shap-grid">
+            <div class="shap-card pos-card">
+              <h4>Factors Increasing Risk</h4>
+              <div id="pos-factors-container" class="factors-list"></div>
+            </div>
+
+            <div class="shap-card neg-card">
+              <h4>Factors Mitigating Risk</h4>
+              <div id="neg-factors-container" class="factors-list"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const API_BASE_URL = 'http://localhost:8000';
+
+    const PRESETS = {
+      low: {
+        order_id: 'ORD_LOW_001',
+        customer_id: 'CUST_LOW_001',
+        timestamp: '2025-06-15 14:30:00',
+        order_amount: 120.00,
+        product_category: 'Books',
+        payment_method: 'Credit Card',
+        customer_age_days: 365,
+        previous_orders: 10,
+        previous_returns: 0,
+        customer_return_rate: 0.0,
+        orders_last_7_days: 0,
+        orders_last_30_days: 2,
+        returns_last_7_days: 0,
+        returns_last_30_days: 0,
+        average_order_value: 115.00,
+        discount_percentage: 0.0,
+        delivery_days: 2,
+        return_days_after_delivery: 14,
+        address_change_count: 0,
+        payment_failures: 0,
+        previous_chargebacks: 0,
+        is_first_order: '0',
+        is_high_value_order: '0',
+        review_threshold: 0.30
+      },
+      medium: {
+        order_id: 'ORD_MED_001',
+        customer_id: 'CUST_MED_001',
+        timestamp: '2025-06-15 14:30:00',
+        order_amount: 89.99,
+        product_category: 'Clothing',
+        payment_method: 'UPI',
+        customer_age_days: 550,
+        previous_orders: 6,
+        previous_returns: 1,
+        customer_return_rate: 0.15,
+        orders_last_7_days: 1,
+        orders_last_30_days: 2,
+        returns_last_7_days: 0,
+        returns_last_30_days: 0,
+        average_order_value: 95.00,
+        discount_percentage: 10.0,
+        delivery_days: 4,
+        return_days_after_delivery: 8,
+        address_change_count: 1,
+        payment_failures: 0,
+        previous_chargebacks: 0,
+        is_first_order: '0',
+        is_high_value_order: '0',
+        review_threshold: 0.30
+      },
+      high: {
+        order_id: 'ORD_HIGH_001',
+        customer_id: 'CUST_HIGH_001',
+        timestamp: '2025-06-15 14:30:00',
+        order_amount: 399.99,
+        product_category: 'Electronics',
+        payment_method: 'COD',
+        customer_age_days: 500,
+        previous_orders: 5,
+        previous_returns: 2,
+        customer_return_rate: 0.35,
+        orders_last_7_days: 1,
+        orders_last_30_days: 2,
+        returns_last_7_days: 0,
+        returns_last_30_days: 1,
+        average_order_value: 200.00,
+        discount_percentage: 25.0,
+        delivery_days: 4,
+        return_days_after_delivery: 3,
+        address_change_count: 1,
+        payment_failures: 0,
+        previous_chargebacks: 0,
+        is_first_order: '0',
+        is_high_value_order: '1',
+        review_threshold: 0.30
+      }
+    };
+
+    // Load defaults
+    window.addEventListener('DOMContentLoaded', () => {
+      loadPreset('low');
+      checkHealth();
+    });
+
+    async function checkHealth() {
+      const badge = document.getElementById('health-status');
+      badge.className = 'health-badge offline';
+      badge.innerHTML = '<span class="ping-dot"></span>API: Checking...';
+
+      try {
+        const res = await fetch(`${API_BASE_URL}/health`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.model_loaded) {
+            badge.className = 'health-badge online';
+            badge.innerHTML = '<span class="ping-dot"></span>API: Online';
+            return;
+          }
+        }
+        badge.className = 'health-badge offline';
+        badge.innerHTML = '<span class="ping-dot"></span>API: Degraded';
+      } catch (err) {
+        badge.className = 'health-badge offline';
+        badge.innerHTML = '<span class="ping-dot"></span>API: Offline';
+      }
+    }
+
+    function loadPreset(presetName) {
+      const data = PRESETS[presetName];
+      
+      // Auto-generate current time
+      const now = new Date();
+      const formatted = now.toISOString().replace('T', ' ').substring(0, 19);
+
+      // Populate input controls
+      document.getElementById('order_id').value = data.order_id;
+      document.getElementById('customer_id').value = data.customer_id;
+      document.getElementById('timestamp').value = formatted;
+      document.getElementById('order_amount').value = data.order_amount;
+      document.getElementById('discount_percentage').value = data.discount_percentage;
+      document.getElementById('product_category').value = data.product_category;
+      document.getElementById('payment_method').value = data.payment_method;
+      document.getElementById('customer_age_days').value = data.customer_age_days;
+      document.getElementById('previous_orders').value = data.previous_orders;
+      document.getElementById('previous_returns').value = data.previous_returns;
+      document.getElementById('customer_return_rate').value = data.customer_return_rate;
+      document.getElementById('average_order_value').value = data.average_order_value;
+      document.getElementById('orders_last_7_days').value = data.orders_last_7_days;
+      document.getElementById('orders_last_30_days').value = data.orders_last_30_days;
+      document.getElementById('returns_last_7_days').value = data.returns_last_7_days;
+      document.getElementById('returns_last_30_days').value = data.returns_last_30_days;
+      document.getElementById('delivery_days').value = data.delivery_days;
+      document.getElementById('return_days_after_delivery').value = data.return_days_after_delivery;
+      document.getElementById('address_change_count').value = data.address_change_count;
+      document.getElementById('payment_failures').value = data.payment_failures;
+      document.getElementById('previous_chargebacks').value = data.previous_chargebacks;
+      document.getElementById('is_first_order').value = data.is_first_order;
+      document.getElementById('is_high_value_order').value = data.is_high_value_order;
+      document.getElementById('review_threshold').value = data.review_threshold;
+
+      // Hide results when switching presets
+      document.getElementById('results-content').style.display = 'none';
+      document.getElementById('empty-state').style.display = 'flex';
+      document.getElementById('error-state').style.display = 'none';
+    }
+
+    function getRiskColor(band) {
+      switch (band) {
+        case 'Low': return '#10b981';
+        case 'Medium': return '#f59e0b';
+        case 'High': return '#f97316';
+        case 'Very High': return '#ef4444';
+        default: return '#9ca3af';
+      }
+    }
+
+    async function handleSubmit(event) {
+      event.preventDefault();
+      
+      const submitBtn = document.getElementById('btn-submit');
+      const emptyState = document.getElementById('empty-state');
+      const loadingState = document.getElementById('loading-state');
+      const errorState = document.getElementById('error-state');
+      const resultsContent = document.getElementById('results-content');
+      
+      submitBtn.disabled = true;
+      submitBtn.innerText = 'Analyzing...';
+      emptyState.style.display = 'none';
+      loadingState.style.display = 'flex';
+      errorState.style.display = 'none';
+      resultsContent.style.display = 'none';
+
+      // Capture form object
+      const form = document.getElementById('risk-form');
+      const formData = new FormData(form);
+      const payload = {};
+      
+      formData.forEach((value, key) => {
+        // Parse numerical values to numbers, selects appropriately
+        if (['order_amount', 'discount_percentage', 'customer_return_rate', 'average_order_value', 'review_threshold'].includes(key)) {
+          payload[key] = parseFloat(value);
+        } else if (['customer_age_days', 'previous_orders', 'previous_returns', 'orders_last_7_days', 'orders_last_30_days', 'returns_last_7_days', 'returns_last_30_days', 'delivery_days', 'return_days_after_delivery', 'address_change_count', 'payment_failures', 'previous_chargebacks', 'is_first_order', 'is_high_value_order'].includes(key)) {
+          payload[key] = parseInt(value, 10);
+        } else {
+          payload[key] = value;
+        }
+      });
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/predict`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+          const errData = await response.json();
+          throw new Error(
+            Array.isArray(errData.detail)
+              ? errData.detail.map(d => `${d.loc.join('.')}: ${d.msg}`).join(', ')
+              : errData.detail || 'Prediction failed'
+          );
+        }
+
+        const data = await response.json();
+        
+        // Populate results fields
+        document.getElementById('gauge-number').innerText = data.risk_score;
+        document.getElementById('probability-value').innerText = `${(data.risk_probability * 100).toFixed(2)}%`;
+        document.getElementById('risk-band-value').innerText = data.risk_band;
+        
+        const color = getRiskColor(data.risk_band);
+        document.getElementById('risk-band-value').style.color = color;
+        
+        // Update SVG arc offset (radius 42, length 264)
+        const offset = 264 - (264 * data.risk_score) / 100;
+        const arc = document.getElementById('gauge-arc');
+        arc.style.strokeDashoffset = offset;
+        arc.style.stroke = color;
+
+        // Decision badge
+        const badge = document.getElementById('decision-badge');
+        badge.innerText = data.decision;
+        if (data.decision === 'REVIEW') {
+          badge.style.backgroundColor = 'rgba(239, 68, 68, 0.15)';
+          badge.style.color = '#ef4444';
+          badge.style.border = '1px solid #ef4444';
+        } else {
+          badge.style.backgroundColor = 'rgba(16, 185, 129, 0.15)';
+          badge.style.color = '#10b981';
+          badge.style.border = '1px solid #10b981';
+        }
+
+        // Summary text
+        document.getElementById('summary-text').innerText = `"${data.summary}"`;
+
+        // Render SHAP Positive Factors
+        const posContainer = document.getElementById('pos-factors-container');
+        posContainer.innerHTML = '';
+        if (data.positive_factors.length === 0) {
+          posContainer.innerHTML = '<p class="no-factors">No factors significantly increased the risk score.</p>';
+        } else {
+          data.positive_factors.forEach(f => {
+            const width = Math.min(100, f.contribution * 40);
+            posContainer.innerHTML += `
+              <div class="factor-row">
+                <div class="factor-info">
+                  <span class="factor-name">${f.display_name} <span class="factor-val">(${f.value})</span></span>
+                </div>
+                <div class="factor-bar-container">
+                  <div class="factor-bar pos-bar" style="width: ${width}%"></div>
+                  <span class="factor-contrib">+${f.contribution.toFixed(2)}</span>
+                </div>
+              </div>
+            `;
+          });
+        }
+
+        // Render SHAP Negative Factors
+        const negContainer = document.getElementById('neg-factors-container');
+        negContainer.innerHTML = '';
+        if (data.negative_factors.length === 0) {
+          negContainer.innerHTML = '<p class="no-factors">No factors significantly mitigated the risk score.</p>';
+        } else {
+          data.negative_factors.forEach(f => {
+            const width = Math.min(100, Math.abs(f.contribution) * 40);
+            negContainer.innerHTML += `
+              <div class="factor-row">
+                <div class="factor-info">
+                  <span class="factor-name">${f.display_name} <span class="factor-val">(${f.value})</span></span>
+                </div>
+                <div class="factor-bar-container">
+                  <div class="factor-bar neg-bar" style="width: ${width}%"></div>
+                  <span class="factor-contrib">${f.contribution.toFixed(2)}</span>
+                </div>
+              </div>
+            `;
+          });
+        }
+
+        // Switch panels
+        loadingState.style.display = 'none';
+        resultsContent.style.display = 'flex';
+
+      } catch (err) {
+        document.getElementById('error-message').innerText = err.message;
+        loadingState.style.display = 'none';
+        errorState.style.display = 'flex';
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerText = 'Analyze Return';
+      }
+    }
+  </script>
+</body>
+</html>
