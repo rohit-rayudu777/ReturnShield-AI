@@ -118,11 +118,14 @@ export default function RiskConsole({ apiHealth, onCheckHealth }) {
     setLoading(true);
     setError(null);
 
+    // Operational threshold is controlled server-side; omit review_threshold from API payload
+    const { review_threshold, ...payload } = formData;
+
     try {
       const response = await fetch(`${API_BASE_URL}/predict`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(payload)
       });
 
       if (!response.ok) {
