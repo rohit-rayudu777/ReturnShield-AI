@@ -13,8 +13,12 @@ RUN npm ci
 # Copy frontend source code
 COPY . .
 
-# Use Docker-specific env so VITE_API_URL="" — nginx proxy handles /health and /predict
-RUN cp .env.docker .env && npm run build
+# Accept optional build argument VITE_API_URL for Render / production deployments
+ARG VITE_API_URL
+ENV VITE_API_URL=$VITE_API_URL
+
+# If VITE_API_URL build arg is provided, write it to .env; otherwise copy .env.docker (relative /health and /predict paths for local Nginx proxy)
+RUN if [ -n "$VITE_API_URL" ]; then echo "VITE_API_URL=$VITE_API_URL" > .env; else cp .env.docker .env; fi && npm run build
 
 # Stage 2: Serve static files with Nginx
 FROM nginx:alpine
