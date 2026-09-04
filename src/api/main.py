@@ -96,6 +96,7 @@ origins = [
     "http://127.0.0.1",
     "http://127.0.0.1:3000",
     "http://127.0.0.1:5173",
+    "https://returnshield-frontend.onrender.com",  # Render Production Frontend
 ]
 
 app.add_middleware(

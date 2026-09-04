@@ -86,6 +86,19 @@ def test_healthz_check_status(api_client):
     assert response.json() == {"status": "ok"}
 
 
+def test_cors_allows_render_frontend_origin(api_client):
+    """
+    Verifies that requests originating from the deployed Render frontend URL
+    (https://returnshield-frontend.onrender.com) are allowed by CORS headers.
+    """
+    response = api_client.get(
+        "/health",
+        headers={"Origin": "https://returnshield-frontend.onrender.com"}
+    )
+    assert response.status_code == 200
+    assert response.headers.get("access-control-allow-origin") == "https://returnshield-frontend.onrender.com"
+
+
 # ---------------------------------------------------------------------------
 # Prediction endpoint checks
 # ---------------------------------------------------------------------------
