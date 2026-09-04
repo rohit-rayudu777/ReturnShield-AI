@@ -1,0 +1,13 @@
+.git
+.venv
+__pycache__
+*.pyc
+.pytest_cache
+frontend/node_modules
+frontend/dist
+*.log
+data/audit_log.jsonl
+.vscode
+.idea
+.DS_Store
+Thumbs.db

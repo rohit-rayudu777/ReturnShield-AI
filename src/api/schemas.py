@@ -11,7 +11,7 @@ Target Leakage Prevention:
     if any extra field (such as the target label) is present in the payload.
 """
 
-from typing import List, Literal, Optional, Dict, Union
+from typing import List, Literal, Dict, Union
 # pyrefly: ignore [missing-import]
 from pydantic import BaseModel, Field, field_validator
 
@@ -57,13 +57,9 @@ class ReturnRecordRequest(BaseModel):
         ..., description="Payment method used for the order."
     )
 
-    # Configurable decision parameters (passed separately from feature inputs)
-    review_threshold: Optional[float] = Field(
-        default=0.30,
-        ge=0.0,
-        le=1.0,
-        description="Probability threshold above which the return is flagged for REVIEW. Defaults to Phase 2D recommended threshold."
-    )
+    # NOTE: review_threshold is intentionally NOT a client-facing field.
+    # The operational decision threshold is controlled server-side only
+    # (see REVIEW_THRESHOLD env var / main.py) to prevent threshold manipulation.
 
 
 class FactorResponse(BaseModel):

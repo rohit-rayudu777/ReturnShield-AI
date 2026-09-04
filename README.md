@@ -114,21 +114,45 @@ For every transaction payload sent to `POST /predict`, ReturnShield AI decompose
 
 1. **Synthetic Data Only**: Trained and tested strictly on synthetic e-commerce datasets. No PII, customer identity, or real payment data used.
 2. **Defense-Only System**: Returns recommendations (`ALLOW` / `REVIEW`) only. No automated account bans, order cancellations, or return denials.
-3. **Transparent Auditing**: Full request/response logging for regulatory compliance and model performance tracking.
-4. **Human-in-the-Loop**: Designed as a decision-support assistant for fraud operations teams.
+3. **Server-Controlled Threshold**: The REVIEW decision boundary (`threshold = 0.30`) is set server-side via the `REVIEW_THRESHOLD` environment variable. Clients cannot override it.
+4. **Pseudonymized Audit Logs**: Prediction audit entries store SHA-256-truncated hashes of `order_id`/`customer_id` — not raw identifiers — preserving auditability without PII exposure.
+5. **Human-in-the-Loop**: Designed as a decision-support assistant for fraud operations teams.
 
 ---
 
 ## Technology Stack
 
-- **Backend Framework**: Python 3.13, FastAPI 0.100+, Uvicorn, Pydantic v2
+- **Backend Framework**: Python 3.13 (local), Python 3.12-slim (Docker), FastAPI 0.100+, Uvicorn, Pydantic v2
 - **Machine Learning**: scikit-learn (LogisticRegression, StandardScaler), SHAP (LinearExplainer), pandas, NumPy, joblib
 - **Frontend Dashboard**: React 18, Vite 5, Vanilla CSS (Custom dark/gold editorial design system)
+- **Container Stack**: Docker, Docker Compose v2, Nginx (reverse proxy + static serving)
 - **Testing & Quality**: pytest, httpx, black, flake8
 
 ---
 
-## Local Setup & Installation
+## Run with Docker
+
+### Requirements
+- Docker Desktop (with Docker Compose v2+)
+
+### Launch Application
+```powershell
+docker compose up --build
+```
+
+Then open in your browser:
+- **Frontend Dashboard**: [http://localhost:3000](http://localhost:3000)
+- **Backend API**: [http://localhost:8000](http://localhost:8000)
+- **FastAPI Docs**: [http://localhost:8000/docs](http://localhost:8000/docs)
+
+### Stop Containers
+```powershell
+docker compose down
+```
+
+---
+
+## Local Setup & Installation (Without Docker)
 
 ### Prerequisites
 - Python 3.10+ (Python 3.13 tested)
@@ -200,6 +224,9 @@ ReturnShield_ai/
 │   ├── FRONTEND.md                # Phase 4 React frontend documentation
 │   └── SUBMISSION.md              # Buildathon submission summary
 ├── frontend/
+│   ├── Dockerfile                 # Multi-stage Node→Nginx container build
+│   ├── nginx.conf                 # Nginx config: SPA fallback + /health + /predict proxy
+│   ├── .env.docker                # Docker-specific Vite env (VITE_API_URL="")
 │   ├── index.html                 # HTML template with Google serif fonts
 │   ├── index_standalone.html      # Zero-dependency standalone HTML fallback
 │   ├── package.json               # Node package configuration
@@ -226,7 +253,10 @@ ReturnShield_ai/
 │   ├── test_risk_scoring.py       # Risk scoring unit tests
 │   ├── test_explainability.py     # SHAP explainability unit tests
 │   └── test_api.py                # FastAPI REST endpoint unit tests
+├── .dockerignore                  # Docker build context exclusion rules
 ├── .gitignore                     # Git ignore rules
+├── docker-compose.yml             # Docker Compose: backend + frontend services
+├── Dockerfile.backend             # FastAPI backend container definition
 ├── README.md                      # Project documentation & guide
 └── requirements.txt               # Python package dependencies
 ```

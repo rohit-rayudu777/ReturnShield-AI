@@ -12,6 +12,7 @@ IMPORTANT - DEFENSE ONLY:
 """
 
 import datetime
+import hashlib
 import json
 import os
 import uuid
@@ -80,6 +81,13 @@ app = FastAPI(
     lifespan=lifespan
 )
 
+# ---------------------------------------------------------------------------
+# Operational Threshold — server-side only, not client-controlled
+# ---------------------------------------------------------------------------
+# Read from environment variable REVIEW_THRESHOLD; fall back to Phase 2D
+# calibrated value of 0.30. Clients cannot override this.
+_REVIEW_THRESHOLD: float = float(os.environ.get("REVIEW_THRESHOLD", "0.30"))
+
 # Configure CORS - local development origins only (no unrestricted '*')
 origins = [
     "http://localhost",
@@ -102,6 +110,12 @@ app.add_middleware(
 # ---------------------------------------------------------------------------
 # Logging Helper
 # ---------------------------------------------------------------------------
+def _pseudonymize(value: str) -> str:
+    """Return the first 12 hex characters of the SHA-256 hash of value.
+    Preserves auditability (uniqueness) without storing raw identifiers."""
+    return hashlib.sha256(value.encode("utf-8")).hexdigest()[:12]
+
+
 def write_audit_log(
     order_id: str,
     customer_id: str,
@@ -111,15 +125,16 @@ def write_audit_log(
     decision: str
 ) -> str:
     """
-    Logs non-sensitive prediction events in a JSON Lines format for auditability.
-    Saves to data/audit_log.jsonl. No customer sensitive personal info is logged.
+    Logs non-sensitive prediction events in JSON Lines format for auditability.
+    order_id and customer_id are SHA-256 pseudonymized before storage.
+    Saves to data/audit_log.jsonl.
     """
     prediction_id = str(uuid.uuid4())
     log_entry = {
         "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
         "prediction_id": prediction_id,
-        "order_id": order_id,
-        "customer_id": customer_id,
+        "order_id_hash": _pseudonymize(order_id),
+        "customer_id_hash": _pseudonymize(customer_id),
         "risk_probability": round(probability, 4),
         "risk_score": score,
         "risk_band": band,
@@ -181,12 +196,13 @@ async def predict_risk(request: ReturnRecordRequest):
         )
         
     try:
-        # Convert Pydantic request to dict and extract prediction configurations
+        # Convert Pydantic request to dict (no review_threshold field in schema)
         request_data = request.model_dump()
-        review_threshold = request_data.pop("review_threshold", 0.30)
+        
+        # Use server-controlled threshold — not client-provided
+        review_threshold = _REVIEW_THRESHOLD
         
         # Prepare 1-row DataFrame for inference pipeline
-        # Excluding 'review_threshold' ensures only target behavioral variables go to the pipeline
         df_row = pd.DataFrame([request_data])
         
         # Resolve models from cache

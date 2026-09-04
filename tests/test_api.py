@@ -55,8 +55,7 @@ def valid_request_payload():
         "payment_failures": 1,
         "previous_chargebacks": 1,
         "is_first_order": 0,
-        "is_high_value_order": 1,
-        "review_threshold": 0.30
+        "is_high_value_order": 1
     }
 
 

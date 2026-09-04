@@ -1,0 +1,42 @@
+# docker-compose.yml
+# ReturnShield AI — full-stack containerized deployment
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: returnshield-backend
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+    environment:
+      - REVIEW_THRESHOLD=0.30   # Phase 2D calibrated threshold; adjust here without code changes
+    volumes:
+      - audit_logs:/app/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: returnshield-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  audit_logs:
+    driver: local
+
+networks:
+  default:
+    name: returnshield-network
