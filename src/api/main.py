@@ -159,6 +159,15 @@ def write_audit_log(
 # ---------------------------------------------------------------------------
 
 @app.get(
+    "/healthz",
+    summary="Lightweight health check endpoint.",
+    description="Returns HTTP 200 OK for platform liveness probes (e.g. Render)."
+)
+async def healthz_check():
+    return {"status": "ok"}
+
+
+@app.get(
     "/health",
     response_model=HealthResponse,
     summary="Get API health status.",

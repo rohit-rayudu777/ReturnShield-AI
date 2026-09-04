@@ -77,6 +77,15 @@ def test_health_check_status(api_client):
     assert "explainer" in data["artifacts"]
 
 
+def test_healthz_check_status(api_client):
+    """
+    Checks GET /healthz returns 200 and {"status": "ok"}.
+    """
+    response = api_client.get("/healthz")
+    assert response.status_code == 200
+    assert response.json() == {"status": "ok"}
+
+
 # ---------------------------------------------------------------------------
 # Prediction endpoint checks
 # ---------------------------------------------------------------------------
