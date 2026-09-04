@@ -130,6 +130,16 @@ For every transaction payload sent to `POST /predict`, ReturnShield AI decompose
 
 ---
 
+## 🚀 Live Demo
+
+**Frontend:** https://returnshield-frontend.onrender.com
+
+**Backend Health:** https://returnshield-backend.onrender.com/healthz
+
+> ReturnShield AI is deployed on Render with a React frontend and FastAPI ML backend.
+
+
+
 ## Run with Docker
 
 ### Requirements
